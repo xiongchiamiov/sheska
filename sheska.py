@@ -56,6 +56,7 @@ class File(object):
 if __name__ == '__main__':
 	for filename in sys.argv[1:]:
 		sys.stdout.flush()
+		sys.stderr.flush()
 		print "Processing %s" % filename
 		image = File(filename)
 		
