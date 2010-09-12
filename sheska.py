@@ -26,7 +26,7 @@ class File(object):
 	def __str__(self):
 		return "%s: %s" % (self.filename, self.tags)
 	
-	call = lambda self, arg: Popen(['exiftool', arg, self.filename], stdout=PIPE).communicate()[0]
+	call = lambda self, arg: Popen(['exiftool', '-overwrite_original', arg, self.filename], stdout=PIPE).communicate()[0]
 	
 	def write_taglist(self):
 		# If you aren't using digiKam, you probably want to use the Dublin Core
