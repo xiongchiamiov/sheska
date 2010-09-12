@@ -90,8 +90,18 @@ if __name__ == '__main__':
 				print "FILE_NOT_FOUND\n"
 				continue
 		
-		# split string on spaces and replace underscores with spaces
-		image.tags = [tag.replace('_', ' ') for tag in parsedJson[0]['tags'].split(' ')]
+		# split string on spaces
+		image.tags = parsedJson[0]['tags'].split(' ')
+		for index, tag in enumerate(image.tags):
+			newTag = tag
+			if not (tag=='=_=' or tag=='-_-'):
+				newTag = newTag.replace('_', ' ')
+			newTag = newTag.replace('&gt;', '>')
+			newTag = newTag.replace('&lt;', '<')
+			newTag = newTag.replace('&amp;', '&')
+			
+			if newTag != tag:
+				image.tags[index] = newTag
 		print "Writing new tags..."
 		image.write_taglist()
 		print "Done!\n"
