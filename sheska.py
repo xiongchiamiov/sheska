@@ -16,12 +16,24 @@ class File(object):
 		print "Checking for original hash... ",
 		unparsedTagLine = self.call('-xmp:md5sum')
 		if unparsedTagLine:
-			self.hash = unparsedTagLine.split(':')[1].strip()
+			# we don't assign to self.hash here, because we don't want to save
+			# over the already-present hash metadata
+			self._hash = unparsedTagLine.split(':')[1].strip()
 		else:
 			print "hashing... ",
 			self.hash = md5(file(filename, 'r').read()).hexdigest()
-			self.call('-xmp:md5sum=%s' % self.hash)
 		print "ok"
+	
+	def _set_hash(self, hash):
+		'''
+		Set the value of the hash, both in an instance variable and the file's
+		metadata.
+		'''
+		self._hash = hash
+		self.call('-xmp:md5sum=%s' % hash)
+	
+	hash = property(fget=lambda self: self._hash,
+	                fset=_set_hash)
 	
 	def __str__(self):
 		return "%s: %s" % (self.filename, self.tags)
@@ -57,8 +69,24 @@ if __name__ == '__main__':
 				print "Request timed out."
 		parsedJson = json.load(unparsedJson)
 		if not parsedJson:
-			print "FILE_NOT_FOUND\n"
-			continue
+			# hmm, let's see if we can determine the original md5sum from the filename
+			if len(filename.split('.')[0]) == 32:
+				print "Retrying with hash implied from filename..."
+				image.hash = filename.split('.')[0]
+				# and then redo this stuff
+				while True:
+					try:
+						# %3A is a colon (':'), encoded for urls
+						unparsedJson = urlopen('http://chan.sankakucomplex.com/post/index.json?tags=md5%3A' + image.hash)
+						break
+					except URLError:
+						print "Request timed out."
+				parsedJson = json.load(unparsedJson)
+			
+			# this will always be true if we didn't go through the if statement above
+			if not parsedJson:
+				print "FILE_NOT_FOUND\n"
+				continue
 		
 		# split string on spaces and replace underscores with spaces
 		image.tags = [tag.replace('_', ' ') for tag in parsedJson[0]['tags'].split(' ')]
